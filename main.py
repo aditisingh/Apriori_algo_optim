@@ -1,6 +1,7 @@
 import pygtrie as trie
 import itertools
 import string
+import numpy as np
 
 filename='transactionDB1.txt'
 
@@ -28,10 +29,25 @@ for x in words:
 		t[x]=idx
 		idx=idx+1
 
+
 #for every transaction find subsets of size 1
 sz=1
+support_vals=np.zeros((idx,1))
+
 for i in range(len(transaction_DB)):
 	curr=list(itertools.combinations(transaction_DB[i],sz))
 	for j in range(len(curr)):
 		subset=curr[j]
-		print(t[subset[0]])
+		if sz==1:
+			print(t[subset[0]])
+			support_vals[t[subset[0]]]=support_vals[t[subset[0]]]+1
+		else:
+			print(t[subset[0:len(subset)-1]])
+			support_vals[t[subset[0:len(subset)-1]]]=support_vals[t[subset[0:len(subset)-1]]]+1
+
+for k in range(len(itemset_1)):
+	word=itemset_1[k]
+	if(support_vals[t[word]]<minsup_count):
+		del t[word]
+
+
