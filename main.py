@@ -1,11 +1,15 @@
 import pygtrie as trie
 import itertools
+import string
 
-filename='transactionDB.txt'
+filename='transactionDB1.txt'
 
 f=open(filename,'r')
 transaction_DB=[line.split(' ') for line in f.readlines()]
-	
+
+for i in range(len(transaction_DB)):
+	transaction_DB[i][-1]=string.replace(transaction_DB[i][-1],'\n','')
+
 num_transactions=len(transaction_DB)
 
 minsup_count=2
@@ -24,8 +28,10 @@ for x in words:
 		t[x]=idx
 		idx=idx+1
 
-#for every transaction find subsets
-
-for 
- list(itertools.combinations(transaction_DB[39],2))
-
+#for every transaction find subsets of size 1
+sz=1
+for i in range(len(transaction_DB)):
+	curr=list(itertools.combinations(transaction_DB[i],sz))
+	for j in range(len(curr)):
+		subset=curr[j]
+		print(t[subset[0]])
