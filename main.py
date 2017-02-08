@@ -50,4 +50,10 @@ for k in range(len(itemset_1)):
 	if(support_vals[t[word]]<minsup_count):
 		del t[word]
 
+#sort the previous itemset
+itemset_1.sort()
 
+for i in range(len(t.keys())):
+	element=t.keys()[i]
+	idx=itemset_1.index(element)
+	
