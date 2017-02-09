@@ -32,7 +32,7 @@ for x in words:
 
 #for every transaction find subsets of size 1
 sz=1
-support_vals=np.zeros((idx,1))
+support_vals=np.zeros((len(t.keys()),1))
 
 for i in range(len(transaction_DB)):
 	curr=list(itertools.combinations(transaction_DB[i],sz))
@@ -52,13 +52,28 @@ for k in range(len(itemset_1)):
 
 #sort the previous itemset
 itemset_1.sort()
+# t_len=len(t.keys())
 
 #add only the ones with index greater than
-for i in range(len(t.keys())):
+# for i in range(0,len(t.keys()),len(gr_idx)+1):
+# 	element=t.keys()[i]
+# 	idx=itemset_1.index(element)
+# 	gr_idx=itemset_1[idx+1:]
+# 	for j in range(len(gr_idx)):
+# 		element_2=str(element)+'/'+str(gr_idx[j])
+# 		t[element_2]=idx1+1
+# 		print(idx1)
+# 		idx1=idx1+1
+# 		print(t)
+
+i=0
+
+while(i<len(t.keys())):
 	element=t.keys()[i]
 	idx=itemset_1.index(element)
 	gr_idx=itemset_1[idx+1:]
 	for j in range(len(gr_idx)):
 		element_2=str(element)+'/'+str(gr_idx[j])
 		t[element_2]=idx1+1
-		
+		idx1=idx1+1
+	i=i+len(gr_idx)+1
