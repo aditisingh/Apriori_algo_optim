@@ -22,12 +22,12 @@ t=trie.StringTrie()
 
 #Create a trie with it
 itemset_1=[]
-idx=0
+idx1=0
 for x in words:
 	if x not in itemset_1:
 		itemset_1.append(x)
-		t[x]=idx
-		idx=idx+1
+		t[x]=idx1
+		idx1=idx1+1
 
 
 #for every transaction find subsets of size 1
@@ -53,7 +53,12 @@ for k in range(len(itemset_1)):
 #sort the previous itemset
 itemset_1.sort()
 
+#add only the ones with index greater than
 for i in range(len(t.keys())):
 	element=t.keys()[i]
 	idx=itemset_1.index(element)
-	
+	gr_idx=itemset_1[idx+1:]
+	for j in range(len(gr_idx)):
+		element_2=str(element)+'/'+str(gr_idx[j])
+		t[element_2]=idx1+1
+		
