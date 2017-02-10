@@ -3,7 +3,7 @@ import itertools
 import string
 import numpy as np
 
-filename='transactionDB1.txt'
+filename='transactionDB2.txt'
 
 f=open(filename,'r')
 transaction_DB=[line.split(' ') for line in f.readlines()]
@@ -13,12 +13,15 @@ for i in range(len(transaction_DB)):
 
 num_transactions=len(transaction_DB)
 
-minsup_count=2
+minsup_count=5
 k=7
+
+if(k>len(max(transaction_DB,key=len))):
+	print('Value of k cannot be larger than longest transaction')
 
 words=open(filename).read().split()
 
-t=trie.StringTrie()
+t=trie.StringTrie(enable=True)
 
 #Create a trie with it
 itemset_1=[]
@@ -52,19 +55,6 @@ for k in range(len(itemset_1)):
 
 #sort the previous itemset
 itemset_1.sort()
-# t_len=len(t.keys())
-
-#add only the ones with index greater than
-# for i in range(0,len(t.keys()),len(gr_idx)+1):
-# 	element=t.keys()[i]
-# 	idx=itemset_1.index(element)
-# 	gr_idx=itemset_1[idx+1:]
-# 	for j in range(len(gr_idx)):
-# 		element_2=str(element)+'/'+str(gr_idx[j])
-# 		t[element_2]=idx1+1
-# 		print(idx1)
-# 		idx1=idx1+1
-# 		print(t)
 
 i=0
 
@@ -77,3 +67,27 @@ while(i<len(t.keys())):
 		t[element_2]=idx1+1
 		idx1=idx1+1
 	i=i+len(gr_idx)+1
+
+#for every transaction find subsets of size 2
+sz=2
+support_vals=np.zeros(max(t.values()),1))
+
+for i in range(len(transaction_DB)):
+	curr=list(itertools.combinations(transaction_DB[i],sz))
+	curr.sort()
+	for j in range(len(curr)):
+		subset=curr[j]
+		if sz==1:
+			print(t[subset[j]])
+			support_vals[t[subset[j]]]=support_vals[t[subset[j]]]+1
+		else:
+			word=subset[0]
+			for k in range(1,len(subset)):
+				word=word+'/'+subset[k]
+			print(t[word])
+			support_vals[t.__getitem__(word)]=support_vals[t.__getitem__(word)]+1 
+
+for k in range(len(itemset_1)):
+	word=itemset_1[k]
+	if(support_vals[t[word]]<minsup_count):
+		del t[word]
