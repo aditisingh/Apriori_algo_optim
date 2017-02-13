@@ -5,6 +5,7 @@ import itertools
 import string
 import numpy as np
 import sys
+import time
 
 def get_support_vals(t, x, node):
 	support_vals=np.zeros((1,node))
@@ -24,15 +25,13 @@ def get_support_vals(t, x, node):
 		t[key]=support_vals[0][idx]
 	return t;
 
-
-
-
 def pruning_trie(t,minsup_count):
 	for word in list(t):
 		if t[word]<minsup_count:
 			del t[word]
 	return t;
 
+start = time.clock()
 
 total=len(sys.argv)
 
@@ -74,11 +73,11 @@ for x in words:
 #Candidate generation
 i=0
 while(i<len(t.keys())):
-	element=t.keys()[i]
+	element=t.keys()[i].split('/')
 	idx=words.index(element[-1])
 	gr_idx=words[idx+1:]
 	for n in range(len(gr_idx)):
-		element_2=str(element)+'/'+str(gr_idx[n])
+		element_2=str(t.keys()[i])+'/'+str(gr_idx[n])
 		if(~t.has_key(element_2)):
 			t[element_2]=count+1
 		count=count+1
@@ -93,3 +92,4 @@ t=get_support_vals(t,transaction_DB,1+max(t.values()))
 t=pruning_trie(t,minsup_count)
 
 print(t)
+print ('Total execution time: ' + str(time.clock() - start)+ ' seconds')
