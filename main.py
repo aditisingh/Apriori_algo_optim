@@ -7,7 +7,7 @@ import numpy as np
 import sys
 import time
 
-def get_support_vals(t, x, node, sz):
+def get_support_vals(t, x, node, sz): #not working for >=2 number of itemsets
 	support_vals=np.zeros((1,node))	
 	for transaction in x: #for every transaction
 		curr=list(itertools.combinations(transaction,sz))
@@ -27,10 +27,11 @@ def get_support_vals(t, x, node, sz):
 			t[key]=support_vals[0][idx]
 	return t;
 
-def pruning_trie(t,minsup_count):
+def pruning_trie(t,minsup_count,sz):
 	for word in list(t):
-		if t[word]<minsup_count:
-			del t[word]
+		if word.count('/')==(sz-1):
+			if t[word]<minsup_count:
+				del t[word]
 	return t;
 
 start = time.clock()
@@ -84,20 +85,25 @@ for x in word_index:
 f_o=open(out,'r+')
 for sz in range(1, len(max(transaction_DB,key=len))):
 	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz)
-	t=pruning_trie(t,minsup_count)
-	for i in range(len(t.keys())):
-		key=t.keys()[i]
-		value=int(t.__getitem__(key))
-		f_o.write(str(words[int(key)])+'\t ('+str(value)+')')
+	t=pruning_trie(t,minsup_count,sz)
+	if(k<=sz):
+		for i in range(len(t.keys())):
+			key=t.keys()[i]
+			value=int(t.__getitem__(key))
+			f_o.write(str(words[int(key)])+'\t ('+str(value)+') \n')
 	j=0
-	element=t.keys()[j].split('/')
-	idx=word_index.index(int(element[-1]))
-	gr_idx=word_index[idx+1:]
-	for n in range(len(gr_idx)):
-		element_2=str(t.keys()[i])+'/'+str(gr_idx[n])
-		if(~t.has_key(element_2)):
-			t[element_2]=count+1
-		count=count+1
+	while(j<len(t.keys())):
+		element=t.keys()[j].split('/')
+		idx=word_index.index(int(element[-1]))
+		gr_idx=word_index[idx+1:]
+		add=0
+		for n in range(len(gr_idx)):
+			element_2=str(t.keys()[j])+'/'+str(gr_idx[n])
+			if(~t.has_key(element_2)):
+				t[element_2]=count+1
+				count=count+1
+				add=add+1
+		j=j+1+add
 f_o.close()
 
 for i in range(len(t.keys())):
