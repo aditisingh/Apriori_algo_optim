@@ -16,15 +16,17 @@ def get_support_vals(t, x, node, sz): #not working for >=2 number of itemsets
 			for j in range(1,len(curr[i])):
 				key=key+'/'+str(word_index[curr[i][j]])
 			#constructed key
-			print(t)
-			print(key)
-			print('\n')
+			# print(t)
+			# print(key)
+			# print('\n')
 			if(t.has_key(key)):	#add it
 				node_val=t.__getitem__(key)
 				support_vals[0][node_val]=support_vals[0][node_val]+1
 	for key in t.keys():
+		if(key.count('/')==sz-1):
 			idx=t[key]
 			t[key]=support_vals[0][idx]
+			# print(t[key])
 	return t;
 
 def pruning_trie(t,minsup_count,sz):
@@ -82,15 +84,28 @@ for x in word_index:
 	t[str(x)]=count
 	count=count+1
 
+print('Candidate generation done')
+
 f_o=open(out,'r+')
+
 for sz in range(1, len(max(transaction_DB,key=len))):
+	print('Size: '+str(sz))
 	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz)
+	print('Support values generation done')
+
 	t=pruning_trie(t,minsup_count,sz)
+	print('Pruning done')
+
 	if(k<=sz):
 		for i in range(len(t.keys())):
 			key=t.keys()[i]
-			value=int(t.__getitem__(key))
-			f_o.write(str(words[int(key)])+'\t ('+str(value)+') \n')
+			if(key.count('/')==sz-1):
+				value=int(t.__getitem__(key))
+				print(key)
+				print(words[key])
+				print(str(value))
+				print('\n')
+				f_o.write(str(words[key])+'\t ('+str(value)+') \n')
 	j=0
 	while(j<len(t.keys())):
 		element=t.keys()[j].split('/')
@@ -104,44 +119,46 @@ for sz in range(1, len(max(transaction_DB,key=len))):
 				count=count+1
 				add=add+1
 		j=j+1+add
+	print('Candidate generation done')
+
 f_o.close()
 
-for i in range(len(t.keys())):
-	key=t.keys()[i]
-	value=int(t.__getitem__(key))
-	f_o.write(str(words[int(key)])+'\t ('+str(value)+')')
+# for i in range(len(t.keys())):
+# 	key=t.keys()[i]
+# 	value=int(t.__getitem__(key))
+# 	f_o.write(str(words[int(key)])+'\t ('+str(value)+')')
 
 
 
 
 #Candidate generation
-i=0
-while(i<len(t.keys())):
-	element=t.keys()[i].split('/')
-	idx=word_index.index(int(element[-1]))
-	gr_idx=word_index[idx+1:]
-	for n in range(len(gr_idx)):
-		element_2=str(t.keys()[i])+'/'+str(gr_idx[n])
-		if(~t.has_key(element_2)):
-			t[element_2]=count+1
-		count=count+1
-	i=i+1
+# i=0
+# while(i<len(t.keys())):
+# 	element=t.keys()[i].split('/')
+# 	idx=word_index.index(int(element[-1]))
+# 	gr_idx=word_index[idx+1:]
+# 	for n in range(len(gr_idx)):
+# 		element_2=str(t.keys()[i])+'/'+str(gr_idx[n])
+# 		if(~t.has_key(element_2)):
+# 			t[element_2]=count+1
+# 		count=count+1
+# 	i=i+1
 
-print ('Candidate generation time: ' + str(time.clock() - pt_1)+ ' seconds')
-pt_2= time.clock() 
+# print ('Candidate generation time: ' + str(time.clock() - pt_1)+ ' seconds')
+# pt_2= time.clock() 
 
-# all candidates ready
+# # all candidates ready
 
-#Next, we get all the support count for each candidate
-t=get_support_vals(t,transaction_DB,1+max(t.values()),k,1)
+# #Next, we get all the support count for each candidate
+# t=get_support_vals(t,transaction_DB,1+max(t.values()),k,1)
 
-print ('Support value calculation time: ' + str(time.clock() - pt_2)+ ' seconds')
-pt_3= time.clock()
+# print ('Support value calculation time: ' + str(time.clock() - pt_2)+ ' seconds')
+# pt_3= time.clock()
 
-#pruning operation
-t=pruning_trie(t,minsup_count)
+# #pruning operation
+# t=pruning_trie(t,minsup_count)
 
-print ('Pruning operation time: ' + str(time.clock() - pt_3)+ ' seconds')
+# print ('Pruning operation time: ' + str(time.clock() - pt_3)+ ' seconds')
 
-print(t)
+# print(t)
 print ('Total execution time: ' + str(time.clock() - start)+ ' seconds')
