@@ -101,11 +101,14 @@ for sz in range(1, len(max(transaction_DB,key=len))):
 			key=t.keys()[i]
 			if(key.count('/')==sz-1):
 				value=int(t.__getitem__(key))
-				print(key)
-				print(words[key])
-				print(str(value))
-				print('\n')
-				f_o.write(str(words[key])+'\t ('+str(value)+') \n')
+				# print(key,i)
+				# print(words[key])
+				# print(str(value))
+				# print('\n')
+				list_element=key.split('/')
+				for element in list_element:
+					f_o.write(str(words[int(element)])+' ')
+				f_o.write('\t ('+str(value)+') \n')
 	j=0
 	while(j<len(t.keys())):
 		element=t.keys()[j].split('/')
