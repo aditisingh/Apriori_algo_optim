@@ -84,18 +84,24 @@ for x in word_index:
 	t[str(x)]=count
 	count=count+1
 
-print('Candidate generation done')
+print('Candidate generation done in '+ str(time.clock() - pt_1)+ ' seconds')
 
 f_o=open(out,'r+')
 
-for sz in range(1, len(max(transaction_DB,key=len))):
+for sz in range(1, 1+len(max(transaction_DB,key=len))):
 	print('Size: '+str(sz))
+	pt_2= time.clock()
+
+	null_set=0
 	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz)
-	print('Support values generation done')
+	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
 
+	pt_3=time.clock()
 	t=pruning_trie(t,minsup_count,sz)
-	print('Pruning done')
-
+	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
+	# print(t)
+	
+	pt_4=time.clock()
 	if(k<=sz):
 		for i in range(len(t.keys())):
 			key=t.keys()[i]
@@ -109,20 +115,54 @@ for sz in range(1, len(max(transaction_DB,key=len))):
 				for element in list_element:
 					f_o.write(str(words[int(element)])+' ')
 				f_o.write('\t ('+str(value)+') \n')
+	print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
 	j=0
+	pt_5=time.clock()
+	add1=0
+	
 	while(j<len(t.keys())):
-		element=t.keys()[j].split('/')
-		idx=word_index.index(int(element[-1]))
-		gr_idx=word_index[idx+1:]
+		# print('\n')
+		# print(element)
+		# print(j)
 		add=0
-		for n in range(len(gr_idx)):
-			element_2=str(t.keys()[j])+'/'+str(gr_idx[n])
-			if(~t.has_key(element_2)):
-				t[element_2]=count+1
-				count=count+1
-				add=add+1
+		if(t.keys()[j].count('/')==sz-1):
+			element=t.keys()[j].split('/')
+			idx=word_index.index(int(element[-1]))
+			gr_idx=word_index[idx+1:]
+			for n in range(len(gr_idx)):
+				element_2=str(t.keys()[j])+'/'+str(gr_idx[n])
+				cnt=0
+				subsets_element_2=list(itertools.combinations(element_2.split('/'),sz))
+				for element1 in subsets_element_2:
+					element1=list(element1)
+					# if((element[-1]==element1[0])):
+						# pasfils
+					# else:
+					if(t.has_key('/'.join(element1))):
+						pass
+					else:
+						cnt=cnt+1
+				# print(element_2)
+				if(cnt==0):
+					if(t.has_key(element_2)):
+						pass
+					else:
+						t[element_2]=count+1
+						# print('Added element')
+						# print(j,add,add1,element,element_2)
+						# print('\n')
+						count=count+1
+						add=add+1
+						add1=add1+1
 		j=j+1+add
-	print('Candidate generation done')
+
+	#No new candidates generated
+	if(add1==0):
+		null_set=1
+		break
+
+	print('\n')
+	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
 
 f_o.close()
 
