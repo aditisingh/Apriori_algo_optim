@@ -76,6 +76,8 @@ for i in range(len(transaction_DB)):
 print ('Argument reading time: ' + str(time.clock() - start)+ ' seconds')
 pt_1= time.clock()
 
+sz=1
+print('Size: '+str(sz))
 t=trie.StringTrie()
 
 count=0
@@ -85,123 +87,78 @@ for x in word_index:
 	count=count+1
 
 print('Candidate generation done in '+ str(time.clock() - pt_1)+ ' seconds')
-
 f_o=open(out,'r+')
+pt_2= time.clock()
+t=get_support_vals(t,transaction_DB,1+max(t.values()),sz) 
+print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
+pt_3=time.clock()
+t=pruning_trie(t,minsup_count,sz)
+print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
+pt_4=time.clock()
+if(k<=sz):
+	l=list(t)
+	l1=[ll for ll in l if ll.count('/')==sz-1]
+	for key in l1:
+		value=int(t.__getitem__(key))
+		list_element=key.split('/')
+		list_element.sort(key=int)
+		for element in list_element:
+			f_o.write(str(words[int(element)])+' ')
+		f_o.write('\t ('+str(value)+') \n')
+print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
+print('\n')
 
-for sz in range(1, 1+len(max(transaction_DB,key=len))):
+for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	print('Size: '+str(sz))
+	pt_5=time.clock()
+	add1=0
+	l=list(t)
+	l1=[ll for ll in l if ll.count('/')==0]
+	l2=[ll for ll in l if ll.count('/')==sz-2]
+	if(len(l2)==0):
+		break
+	# l=l1+l2
+	candidates=list(itertools.product(l1,l2))
+	for c in candidates:
+		element='/'.join(c)
+		if(element.count('/')==sz-1):
+			ll=element.split('/')
+			ll.sort(key=int)
+			element='/'.join(ll)
+			result = list(( ll.count(i)) for i in ll)
+			if(sum(result)-len(result)==0):
+				t[element]=count+1
+				add1=add1+1
+				count=count+1
+	# print(t)
+	#No new candidates generated
+	if(add1==0):
+		break
+	# print('\n')
+	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
 	pt_2= time.clock()
-
-	null_set=0
-	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz)
+	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz) # prune outside
 	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
-
+	# print(t)
 	pt_3=time.clock()
 	t=pruning_trie(t,minsup_count,sz)
 	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
 	# print(t)
-	
 	pt_4=time.clock()
 	if(k<=sz):
-		for i in range(len(t.keys())):
-			key=t.keys()[i]
-			if(key.count('/')==sz-1):
-				value=int(t.__getitem__(key))
-				# print(key,i)
-				# print(words[key])
-				# print(str(value))
-				# print('\n')
-				list_element=key.split('/')
-				for element in list_element:
-					f_o.write(str(words[int(element)])+' ')
-				f_o.write('\t ('+str(value)+') \n')
-	print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
-	j=0
-	pt_5=time.clock()
-	add1=0
-	
-	while(j<len(t.keys())):
-		# print('\n')
-		# print(element)
-		# print(j)
-		add=0
-		if(t.keys()[j].count('/')==sz-1):
-			element=t.keys()[j].split('/')
-			idx=word_index.index(int(element[-1]))
-			gr_idx=word_index[idx+1:]
-			for n in range(len(gr_idx)):
-				element_2=str(t.keys()[j])+'/'+str(gr_idx[n])
-				cnt=0
-				subsets_element_2=list(itertools.combinations(element_2.split('/'),sz))
-				for element1 in subsets_element_2:
-					element1=list(element1)
-					# if((element[-1]==element1[0])):
-						# pasfils
-					# else:
-					if(t.has_key('/'.join(element1))):
-						pass
-					else:
-						cnt=cnt+1
-				# print(element_2)
-				if(cnt==0):
-					if(t.has_key(element_2)):
-						pass
-					else:
-						t[element_2]=count+1
-						# print('Added element')
-						# print(j,add,add1,element,element_2)
-						# print('\n')
-						count=count+1
-						add=add+1
-						add1=add1+1
-		j=j+1+add
-
-	#No new candidates generated
-	if(add1==0):
-		null_set=1
-		break
-
+		l=list(t)
+		l1=[ll for ll in l if ll.count('/')==sz-1]
+		for key in l1:
+			value=int(t.__getitem__(key))
+			list_element=key.split('/')
+			list_element.sort(key=int)
+			for element in list_element:
+				f_o.write(str(words[int(element)])+' ')
+			f_o.write('\t ('+str(value)+') \n')
+		print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
 	print('\n')
-	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
-
+	# j=0
+	
 f_o.close()
 
-# for i in range(len(t.keys())):
-# 	key=t.keys()[i]
-# 	value=int(t.__getitem__(key))
-# 	f_o.write(str(words[int(key)])+'\t ('+str(value)+')')
-
-
-
-
-#Candidate generation
-# i=0
-# while(i<len(t.keys())):
-# 	element=t.keys()[i].split('/')
-# 	idx=word_index.index(int(element[-1]))
-# 	gr_idx=word_index[idx+1:]
-# 	for n in range(len(gr_idx)):
-# 		element_2=str(t.keys()[i])+'/'+str(gr_idx[n])
-# 		if(~t.has_key(element_2)):
-# 			t[element_2]=count+1
-# 		count=count+1
-# 	i=i+1
-
-# print ('Candidate generation time: ' + str(time.clock() - pt_1)+ ' seconds')
-# pt_2= time.clock() 
-
-# # all candidates ready
-
-# #Next, we get all the support count for each candidate
-# t=get_support_vals(t,transaction_DB,1+max(t.values()),k,1)
-
-# print ('Support value calculation time: ' + str(time.clock() - pt_2)+ ' seconds')
-# pt_3= time.clock()
-
-# #pruning operation
-# t=pruning_trie(t,minsup_count)
-
-# print ('Pruning operation time: ' + str(time.clock() - pt_3)+ ' seconds')
-
-# print(t)
 print ('Total execution time: ' + str(time.clock() - start)+ ' seconds')
