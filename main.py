@@ -6,27 +6,27 @@ import string
 import numpy as np
 import sys
 import time
+import cProfile
 
 def get_support_vals(t, x, node, sz): #not working for >=2 number of itemsets
 	support_vals=np.zeros((1,node))	
+	p1=time.clock()
 	for transaction in x: #for every transaction
-		curr=list(itertools.combinations(transaction,sz))
-		for i in range(len(curr)):
-			key=str(word_index[curr[i][0]])
-			for j in range(1,len(curr[i])):
-				key=key+'/'+str(word_index[curr[i][j]])
+		comb=list(itertools.combinations(transaction,sz))
+		for curr in comb:
+			key='/'.join(str(x) for x in (curr))
 			#constructed key
-			# print(t)
-			# print(key)
-			# print('\n')
 			if(t.has_key(key)):	#add it
 				node_val=t.__getitem__(key)
 				support_vals[0][node_val]=support_vals[0][node_val]+1
+	print('Part1 time: ' + str(time.clock() - p1)+ ' seconds')
+	p2=time.clock()
 	for key in t.keys():
 		if(key.count('/')==sz-1):
 			idx=t[key]
 			t[key]=support_vals[0][idx]
 			# print(t[key])
+	print('Part2 time: ' + str(time.clock() - p2)+ ' seconds')
 	return t;
 
 def pruning_trie(t,minsup_count,sz):
@@ -137,10 +137,13 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	# print('\n')
 	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
 	pt_2= time.clock()
+	cProfile.run(get_support_vals(t,transaction_DB,1+max(t.values()),sz))
 	t=get_support_vals(t,transaction_DB,1+max(t.values()),sz) # prune outside
+	
 	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
 	# print(t)
 	pt_3=time.clock()
+	cProfile.run(t,minsup_count,sz)
 	t=pruning_trie(t,minsup_count,sz)
 	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
 	# print(t)
