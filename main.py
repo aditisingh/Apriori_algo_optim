@@ -5,18 +5,23 @@ import string
 import numpy as np
 import sys
 import time
-import cProfile, pstats# StringIO
+import cProfile, pstats, StringIO
+import pdb
+import numpy as np
+import sys
+import time
+import cProfile, pstats, StringIO
 import pdb
 
 def get_support_vals(dict2, x, node, sz): #not working for >=2 number of itemsets
 	support_vals=np.zeros((1,node))
 	p1=time.clock()
-	# for transaction in x: #for every transaction
-	for i in range(len(x)):
-		transaction=x[i]
+	
+	for transaction in x: #for every transaction
+	# for i in range(len(x)):
+		# transaction=x[i]
 		# print(i)
-		comb=list(itertools.combinations(transaction,sz))
-		for curr in comb:
+		for curr in itertools.combinations(transaction,sz):
 			key='/'.join(str(x) for x in (curr))
 			#constructed key
 			if(dict2.get(key)):	#add it
@@ -25,7 +30,7 @@ def get_support_vals(dict2, x, node, sz): #not working for >=2 number of itemset
 				support_vals[0][node_val]=support_vals[0][node_val]+1
 	print('Part1 time: ' + str(time.clock() - p1)+ ' seconds')
 	p2=time.clock()
-	for key in dict2:
+	for key,value in dict2.iteritems():
 		if(key.count('/')==sz-1):
 			idx=dict2[key] 
 			dict2[key]=support_vals[0][idx]
@@ -93,8 +98,9 @@ dict2={}
 count=0
 
 for i in word_index:
-	dict2[str(i)]=count
+	dict2[str(i)]=count+1
 	count=count+1
+
 
 # pdb.set_trace()
 
@@ -112,6 +118,7 @@ pt_2= time.clock()
 pr = cProfile.Profile()
 pr.enable()
 
+transaction_DB=[transaction for transaction in transaction_DB if len(transaction)>=sz]
 # cProfile.run(get_support_vals(get_support_vals(dict,transaction_DB,count,sz))
 dict2=get_support_vals(dict2,transaction_DB,count+1,sz) 
 # pdb.set_trace()
@@ -138,6 +145,18 @@ for key in dict2:
 
 dict2=dict1
 # pdb.set_trace()
+
+for transaction in transaction_DB:
+	cnt=0
+	# print(transaction)
+	for key, value in dict2.iteritems():
+		if(int(key) in transaction):
+			cnt=cnt+1
+			# print(key)
+	# print(cnt)
+	# print('\n')
+	if(cnt==0):
+		transaction_DB.remove(transaction)
 
 pr.disable()
 s = StringIO.StringIO()
@@ -171,12 +190,11 @@ ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
 print(s.getvalue())
 
-for sz in range(2, 1+len(max(transaction_DB,key=len))):
+for sz in range(2,1+len(max(transaction_DB,key=len))):
 	print('Size: '+str(sz))
 	pt_5=time.clock()
 	pr = cProfile.Profile()
 	pr.enable()
-
 	add1=0
 	l=list(dict2)
 	l1=[ll for ll in l if ll.count('/')==0]
@@ -195,7 +213,7 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 			element='/'.join(ll)
 			result = list(( ll.count(i)) for i in ll)
 			if(sum(result)-len(result)==0):
-				dict2[element]=count
+				dict2[element]=count+1
 				add1=add1+1
 				count=count+1
 	# print(t)
@@ -210,26 +228,22 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
 	print(s.getvalue())
-
 	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
 	pt_2= time.clock()
-
 	pr = cProfile.Profile()
 	pr.enable()
+	transaction_DB=[transaction for transaction in transaction_DB if len(transaction)>=sz]
 	dict2=get_support_vals(dict2,transaction_DB,count+1,sz) # prune outside
 	# pdb.set_trace()
-
 	pr.disable()
 	s = StringIO.StringIO()
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
 	print(s.getvalue())
-
 	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
 	# print(t)
 	pt_3=time.clock()
-
 	pr = cProfile.Profile()
 	pr.enable()
 	# cProfile.run(d,minsup_count,sz)
@@ -247,13 +261,11 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
 	print(s.getvalue())
-
 	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
 	# print(t)
 	pt_4=time.clock()
 	pr = cProfile.Profile()
 	pr.enable()
-
 	if(k<=sz):
 		l=list(dict2)
 		l1=[ll for ll in l if ll.count('/')==sz-1]
@@ -265,14 +277,20 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 				f_o.write(str(words[int(element)])+' ')
 			f_o.write('\t ('+str(int(value))+') \n')
 		print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
-
 	pr.disable()
 	s = StringIO.StringIO()
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
 	print(s.getvalue())
-
+	for transaction in transaction_DB:
+		cnt=0
+		for key, value in dict2.iteritems():
+			if(key.count('/')==sz-1):
+				elements=key.split('/')
+				cnt=cnt+min(transaction.count(int(e)) for e in elements)
+		if(cnt==0):
+			transaction_DB.remove(transaction)
 	print('\n')
 	# j=0
 	
