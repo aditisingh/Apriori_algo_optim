@@ -5,19 +5,23 @@ import string
 import numpy as np
 import sys
 import time
-import cProfile, pstats, StringIO
+import cProfile, pstats# StringIO
 import pdb
 
 def get_support_vals(dict2, x, node, sz): #not working for >=2 number of itemsets
-	support_vals=np.zeros((1,node))	
+	support_vals=np.zeros((1,node))
 	p1=time.clock()
-	for transaction in x: #for every transaction
+	# for transaction in x: #for every transaction
+	for i in range(len(x)):
+		transaction=x[i]
+		# print(i)
 		comb=list(itertools.combinations(transaction,sz))
 		for curr in comb:
 			key='/'.join(str(x) for x in (curr))
 			#constructed key
 			if(dict2.get(key)):	#add it
 				node_val=dict2[str(key)]
+				#print(str(key),node_val)
 				support_vals[0][node_val]=support_vals[0][node_val]+1
 	print('Part1 time: ' + str(time.clock() - p1)+ ' seconds')
 	p2=time.clock()
@@ -74,7 +78,7 @@ s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print s.getvalue()
+print(s.getvalue())
 
 
 print ('Argument reading time: ' + str(time.clock() - start)+ ' seconds')
@@ -92,14 +96,14 @@ for i in word_index:
 	dict2[str(i)]=count
 	count=count+1
 
-pdb.set_trace()
+# pdb.set_trace()
 
 pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print s.getvalue()
+print(s.getvalue())
 
 print('Candidate generation done in '+ str(time.clock() - pt_1)+ ' seconds')
 f_o=open(out,'r+')
@@ -110,14 +114,14 @@ pr.enable()
 
 # cProfile.run(get_support_vals(get_support_vals(dict,transaction_DB,count,sz))
 dict2=get_support_vals(dict2,transaction_DB,count+1,sz) 
-pdb.set_trace()
+# pdb.set_trace()
 
 pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print s.getvalue()
+print(s.getvalue())
 
 print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
 pt_3=time.clock()
@@ -133,15 +137,14 @@ for key in dict2:
 			dict1[key]=dict2[key]
 
 dict2=dict1
-pdb.set_trace()
+# pdb.set_trace()
 
 pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print s.getvalue()
-
+print(s.getvalue())
 print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
 
 pt_4=time.clock()
@@ -166,13 +169,14 @@ s = StringIO.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print s.getvalue()
+print(s.getvalue())
 
 for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	print('Size: '+str(sz))
 	pt_5=time.clock()
 	pr = cProfile.Profile()
 	pr.enable()
+
 	add1=0
 	l=list(dict2)
 	l1=[ll for ll in l if ll.count('/')==0]
@@ -181,7 +185,7 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 		break
 	# l=l1+l2
 	candidates=list(itertools.product(l1,l2))
-	pdb.set_trace()
+	# pdb.set_trace()
 	for c in candidates:
 		element='/'.join(c)
 		ll=element.split('/')
@@ -191,11 +195,11 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 			element='/'.join(ll)
 			result = list(( ll.count(i)) for i in ll)
 			if(sum(result)-len(result)==0):
-				dict2[element]=count+1
+				dict2[element]=count
 				add1=add1+1
 				count=count+1
 	# print(t)
-	pdb.set_trace()
+	# pdb.set_trace()
 	#No new candidates generated
 	if(add1==0):
 		break
@@ -205,7 +209,7 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
-	print s.getvalue()
+	print(s.getvalue())
 
 	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
 	pt_2= time.clock()
@@ -213,14 +217,14 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	pr = cProfile.Profile()
 	pr.enable()
 	dict2=get_support_vals(dict2,transaction_DB,count+1,sz) # prune outside
-	pdb.set_trace()
+	# pdb.set_trace()
 
 	pr.disable()
 	s = StringIO.StringIO()
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
-	print s.getvalue()
+	print(s.getvalue())
 
 	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
 	# print(t)
@@ -230,19 +234,19 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	pr.enable()
 	# cProfile.run(d,minsup_count,sz)
 	#pruning
-	pdb.set_trace()
+	# pdb.set_trace()
 	dict1={}
 	for key in dict2:
 			if dict2[key]>=minsup_count:
 				dict1[key]=dict2[key]
 	dict2=dict1
-	pdb.set_trace()
+	# pdb.set_trace()
 	pr.disable()
 	s = StringIO.StringIO()
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
-	print s.getvalue()
+	print(s.getvalue())
 
 	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
 	# print(t)
@@ -267,7 +271,7 @@ for sz in range(2, 1+len(max(transaction_DB,key=len))):
 	sortby = 'cumulative'
 	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 	ps.print_stats()
-	print s.getvalue()
+	print(s.getvalue())
 
 	print('\n')
 	# j=0
