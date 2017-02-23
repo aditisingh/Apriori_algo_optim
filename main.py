@@ -5,95 +5,67 @@ import string
 import numpy as np
 import sys
 import time
-import cProfile, pstats, StringIO
-import pdb
-import numpy as np
-import sys
-import time
-import cProfile, pstats, StringIO
-import pdb
+import os
 
-def get_support_vals(dict2, x, node, sz): #not working for >=2 number of itemsets
-	support_vals=np.zeros((1,node))
-	p1=time.clock()
-	
-	for transaction in x: #for every transaction
-	# for i in range(len(x)):
-		# transaction=x[i]
-		# print(i)
-		for curr in itertools.combinations(transaction,sz):
-			key='/'.join(str(x) for x in (curr))
-			#constructed key
-			if(dict2.get(key)):	#add it
-				node_val=dict2[str(key)]
-				#print(str(key),node_val)
-				support_vals[0][node_val]=support_vals[0][node_val]+1
-	print('Part1 time: ' + str(time.clock() - p1)+ ' seconds')
-	p2=time.clock()
+#To get the support values for all the candidates generated of size sz
+def get_support_vals(dict2, x, node, sz):
+	support_vals=np.zeros((1,node))	
+	for transaction in x: #for every transaction in transaction database
+		for curr in itertools.combinations(transaction,sz): #find combinations of size sz
+			key='/'.join(str(x) for x in (curr))#constructed key using transaction combination
+			if(dict2.get(key)):	#if the key is in dictionary
+				node_val=dict2[str(key)] #find unique index for the key
+				support_vals[0][node_val]=support_vals[0][node_val]+1 #increment support value
 	for key,value in dict2.iteritems():
-		if(key.count('/')==sz-1):
-			idx=dict2[key] 
-			dict2[key]=support_vals[0][idx]
-			# print(t[key])
-	print('Part2 time: ' + str(time.clock() - p2)+ ' seconds')
+		if(key.count('/')==sz-1): #for the sz sized keys
+			idx=dict2[key] #get unique index for key
+			dict2[key]=support_vals[0][idx] #update the value as the support value
 	return dict2;
 
-start = time.clock()
-
 total=len(sys.argv)
+start=time.clock()
 
 #Check the number of commandline arguments
 if(total!=5):
 	print('Invalid number of arguments, try again. Expected: prog_exe min_sup k input_transaction_file_path output_file_path')
 	sys.exit()
 
-minsup_count=int(sys.argv[1])
-k=int(sys.argv[2])
+minsup_count=int(sys.argv[1]) #The minimum support count
+k=int(sys.argv[2])	#k value, k+ sized itemsets will be printed
 
-filename=str(sys.argv[3])#'transactionDB2.txt'
-out=str(sys.argv[4]) # output file
+filename=str(sys.argv[3]) #input file
+out=str(sys.argv[4]) #output file
+#Fixing the format of the output file
+out=out.split('/')
+out[-1]='out_s='+str(minsup_count)+'_k='+str(k)+'+.txt'
+out='/'.join(out)
 
-pr = cProfile.Profile()
-pr.enable()
+os.mknod(out) #creating the output file
 
 f=open(filename,'r')
-transaction_DB=[line.split(' ') for line in f.readlines()]
+transaction_DB=[line.split(' ') for line in f.readlines()] #Storing the database
 
+#Removing the newline character from the database
 for i in range(len(transaction_DB)):
 	transaction_DB[i][-1]=string.replace(transaction_DB[i][-1],'\n','')
-
-num_transactions=len(transaction_DB)
 
 if(k>len(max(transaction_DB,key=len))):
 	print('Value of k cannot be larger than longest transaction')
 	sys.exit()
 
 words=np.unique(open(filename).read().split())	#contains all words unique
-words.sort()
+words.sort() #Sorting the words, and saving to list
 words=words.tolist()
 word_index=range(len(words)) #conversion of words to int
 
+#Converting the database from string to int
 for i in range(len(transaction_DB)):
 	for j in range(len(transaction_DB[i])):
 		transaction_DB[i][j]=word_index[words.index(transaction_DB[i][j])]
 	transaction_DB[i].sort() #sorting every transaction_DB
 
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print(s.getvalue())
-
-
-print ('Argument reading time: ' + str(time.clock() - start)+ ' seconds')
-pt_1= time.clock()
-
-pr = cProfile.Profile()
-pr.enable()
-
+#Candidate generation for size 1 itemset, with unique value for each key
 sz=1
-print('Size: '+str(sz))
 dict2={}
 count=0
 
@@ -101,75 +73,37 @@ for i in word_index:
 	dict2[str(i)]=count+1
 	count=count+1
 
-
-# pdb.set_trace()
-
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print(s.getvalue())
-
-print('Candidate generation done in '+ str(time.clock() - pt_1)+ ' seconds')
 f_o=open(out,'r+')
-pt_2= time.clock()
 
-pr = cProfile.Profile()
-pr.enable()
-
+#Discard the database which is of size<sz, it won't be of help to calculate support values
+#This will help in faster computation, will be helpful with large sizes sz
 transaction_DB=[transaction for transaction in transaction_DB if len(transaction)>=sz]
-# cProfile.run(get_support_vals(get_support_vals(dict,transaction_DB,count,sz))
+#SUPPORT VALUE CALCULATION
+#Find support values for all keys of size=sz and replacing their value with the support values
 dict2=get_support_vals(dict2,transaction_DB,count+1,sz) 
-# pdb.set_trace()
 
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print(s.getvalue())
-
-print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
-pt_3=time.clock()
-# cProfile.run(dict,minsup_count,sz)
-
-pr = cProfile.Profile()
-pr.enable()
-
-#pruning
+#FREQUENT ITEMSET DETECTION
+#pruning, since dictionary size can't be changed while iterating over it, we declare a new dictionary, and copy the frequent itemsets
 dict1={}
 for key in dict2:
 		if dict2[key]>=minsup_count:
 			dict1[key]=dict2[key]
-
+#Copying back
 dict2=dict1
-# pdb.set_trace()
 
+#Discard the transactions which don't have a single frequent itemset of size sz 
+#these transactions won't be used to find support values for any sz+ itemsets
 for transaction in transaction_DB:
 	cnt=0
-	# print(transaction)
 	for key, value in dict2.iteritems():
 		if(int(key) in transaction):
 			cnt=cnt+1
-			# print(key)
-	# print(cnt)
-	# print('\n')
+			break
 	if(cnt==0):
 		transaction_DB.remove(transaction)
 
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print(s.getvalue())
-print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
-
-pt_4=time.clock()
-pr = cProfile.Profile()
-pr.enable()
-
+#PRINTING 
+#Only print itemsets of size >=k
 if(k<=sz):
 	l=list(dict2)
 	l1=[ll for ll in l if ll.count('/')==sz-1]
@@ -180,92 +114,49 @@ if(k<=sz):
 		for element in list_element:
 			f_o.write(str(words[int(element)])+' ')
 		f_o.write('\t ('+str(int(value))+') \n')
-	print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
-print('\n')
 
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print(s.getvalue())
+#Maximum size of a candidate possible
+max_itemset_size=1+len(max(transaction_DB,key=len))
 
-for sz in range(2,1+len(max(transaction_DB,key=len))):
-	print('Size: '+str(sz))
-	pt_5=time.clock()
-	pr = cProfile.Profile()
-	pr.enable()
-	add1=0
+for sz in range(2,max_itemset_size):
+	add1=0 #stores number of candidates generated of size sz
+
 	l=list(dict2)
-	l1=[ll for ll in l if ll.count('/')==0]
-	l2=[ll for ll in l if ll.count('/')==sz-2]
+	l1=[ll for ll in l if ll.count('/')==0] #getting 1 size itemsets
+	l2=[ll for ll in l if ll.count('/')==sz-2] #getting sz-1 sized itemsets
+	#if no itemsets of size sz-1, terminate 
 	if(len(l2)==0):
 		break
-	# l=l1+l2
-	candidates=list(itertools.product(l1,l2))
-	# pdb.set_trace()
-	for c in candidates:
-		element='/'.join(c)
-		ll=element.split('/')
+	#CANDIDATE GENERATION
+	#join sz-1 sized with size 1 itemset to generate possible candidates
+	for c in itertools.product(l1,l2):
+		element='/'.join(c) #join them 
+		ll=element.split('/') #get all elements
 		ll=list(set(ll))
-		ll.sort(key=int)
+		ll.sort(key=int) #sort
 		if(element.count('/')==sz-1 and len(ll)==sz):
 			element='/'.join(ll)
+			#join to a make a itemset
 			result = list(( ll.count(i)) for i in ll)
-			if(sum(result)-len(result)==0):
+			if(sum(result)-len(result)==0): #only unique values find
 				dict2[element]=count+1
 				add1=add1+1
 				count=count+1
-	# print(t)
-	# pdb.set_trace()
 	#No new candidates generated
 	if(add1==0):
 		break
-	# print('\n')
-	pr.disable()
-	s = StringIO.StringIO()
-	sortby = 'cumulative'
-	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-	ps.print_stats()
-	print(s.getvalue())
-	print('Candidate generation done '+ str(time.clock() - pt_5)+ ' seconds')
-	pt_2= time.clock()
-	pr = cProfile.Profile()
-	pr.enable()
+	#discard the transactions with size smaller than sz
 	transaction_DB=[transaction for transaction in transaction_DB if len(transaction)>=sz]
-	dict2=get_support_vals(dict2,transaction_DB,count+1,sz) # prune outside
-	# pdb.set_trace()
-	pr.disable()
-	s = StringIO.StringIO()
-	sortby = 'cumulative'
-	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-	ps.print_stats()
-	print(s.getvalue())
-	print('Support values generation done in '+ str(time.clock() - pt_2)+ ' seconds')
-	# print(t)
-	pt_3=time.clock()
-	pr = cProfile.Profile()
-	pr.enable()
-	# cProfile.run(d,minsup_count,sz)
-	#pruning
-	# pdb.set_trace()
+
+	#getting the support values for sz sized itemsets
+	dict2=get_support_vals(dict2,transaction_DB,count+1,sz) 
+	#prune the dictionary
 	dict1={}
 	for key in dict2:
 			if dict2[key]>=minsup_count:
 				dict1[key]=dict2[key]
 	dict2=dict1
-	# pdb.set_trace()
-	pr.disable()
-	s = StringIO.StringIO()
-	sortby = 'cumulative'
-	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-	ps.print_stats()
-	print(s.getvalue())
-	print('Pruning done in '+ str(time.clock() - pt_3)+ ' seconds')
-	# print(t)
-	pt_4=time.clock()
-	pr = cProfile.Profile()
-	pr.enable()
+	#printing out
 	if(k<=sz):
 		l=list(dict2)
 		l1=[ll for ll in l if ll.count('/')==sz-1]
@@ -276,13 +167,7 @@ for sz in range(2,1+len(max(transaction_DB,key=len))):
 			for element in list_element:
 				f_o.write(str(words[int(element)])+' ')
 			f_o.write('\t ('+str(int(value))+') \n')
-		print('Writing done in '+ str(time.clock() - pt_4)+ ' seconds')
-	pr.disable()
-	s = StringIO.StringIO()
-	sortby = 'cumulative'
-	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-	ps.print_stats()
-	print(s.getvalue())
+	#remove those transactions, with no sz sized frequent itemsets
 	for transaction in transaction_DB:
 		cnt=0
 		for key, value in dict2.iteritems():
@@ -291,10 +176,7 @@ for sz in range(2,1+len(max(transaction_DB,key=len))):
 				cnt=cnt+min(transaction.count(int(e)) for e in elements)
 		if(cnt==0):
 			transaction_DB.remove(transaction)
-	print('\n')
-	# j=0
 	
 f_o.close()
-print(dict)
 
-print ('Total execution time: ' + str(time.clock() - start)+ ' seconds')
+#print ('Total execution time: ' + str(time.clock() - start)+ ' seconds')
